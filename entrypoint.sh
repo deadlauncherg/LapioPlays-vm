@@ -78,10 +78,15 @@ users:
 chpasswd:
   expire: false
 package_update: false
+write_files:
+  - path: /etc/ssh/sshd_config.d/00-lapioplays.conf
+    permissions: '0644'
+    content: |
+      PasswordAuthentication yes
+      PermitRootLogin yes
 runcmd:
-  - [ bash, -lc, "systemctl enable --now ssh || systemctl enable --now sshd || true" ]
-  - [ bash, -lc, "sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config" ]
-  - [ bash, -lc, "systemctl restart ssh || systemctl restart sshd || true" ]
+  - [bash, -lc, "passwd -u root || true"]
+  - [bash, -lc, "sshd -t && systemctl restart ssh"]
 EOF
 
 cat > /tmp/meta-data <<EOF
