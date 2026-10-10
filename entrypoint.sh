@@ -60,37 +60,40 @@ if [ ! -s "$DISK_IMAGE" ]; then
     -b "$BASE_IMAGE" "$DISK_IMAGE" "$VM_DISK"
 fi
 
-# Generate cloud-init configuration for the guest.
-PASSWORD_HASH="$(openssl passwd -6 "${VM_PASSWORD:-lapio}")"
 
+# Generate cloud-init configuration for the guest.
 cat > /tmp/user-data <<EOF
 #cloud-config
 hostname: ${VM_HOSTNAME:-lapioplays}
 manage_etc_hosts: true
 disable_root: false
 ssh_pwauth: true
+
 users:
   - default
   - name: root
     shell: /bin/bash
     lock_passwd: false
-    passwd: '${PASSWORD_HASH}'
+
 chpasswd:
   expire: false
-package_update: false
+  list:
+    - root:${VM_PASSWORD:-lapio}
+
 write_files:
   - path: /etc/ssh/sshd_config.d/00-lapioplays.conf
     permissions: '0644'
     content: |
       PasswordAuthentication yes
       PermitRootLogin yes
+
 runcmd:
   - [bash, -lc, "passwd -u root || true"]
-  - [bash, -lc, "sshd -t && systemctl restart ssh"]
+  - [bash, -lc, "systemctl restart ssh || systemctl restart sshd || true"]
 EOF
 
 cat > /tmp/meta-data <<EOF
-instance-id: lapioplays-${VM_OS}
+instance-id: lapioplays-${VM_OS}-fresh
 local-hostname: ${VM_HOSTNAME:-lapioplays}
 EOF
 
