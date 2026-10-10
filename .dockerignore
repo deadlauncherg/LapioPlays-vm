@@ -1,0 +1,9 @@
+.git
+.github
+README.md
+vmdata/
+*.qcow2
+*.img
+*.iso
+*.log
+.env
